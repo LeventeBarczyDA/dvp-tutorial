@@ -6,7 +6,20 @@ import Security qualified
 import Trading.Service qualified as DvPService 
 import Trading.Model qualified as DvPModel
 
-setup : Script ()
+data SetupData = SetupData 
+  with 
+    buyer: Party 
+    seller: Party 
+    bank: Party 
+    custodian: Party 
+    issuingAgent: Party 
+    dvpOperator: Party 
+    buyerCashCid: ContractId Cash.Holding 
+    sellerSecurityCid: ContractId Security.Holding 
+    buyerTradingServiceCid: ContractId DvPService.Service 
+    sellerTradingServiceCid: ContractId DvPService.Service 
+
+setup : Script SetupData
 setup = script do
 
   [buyer, seller, bank, custodian, issuingAgent, dvpOperator] <- mapA (\(partyName, userName) -> do 
@@ -21,7 +34,7 @@ setup = script do
       ("Issuer", "issuer"),
       ("Operator", "operator")]
 
-  buyerCash <- submit bank $ createCmd Cash.Holding 
+  buyerCashCid <- submit bank $ createCmd Cash.Holding 
     with 
       owner = buyer
       bank = bank 
@@ -37,74 +50,38 @@ setup = script do
     with 
       amount = 100.00 
 
-  holding <- submit issuingAgent $ exerciseCmd holding Security.Transfer 
+  sellerSecurityCid <- submit issuingAgent $ exerciseCmd holding Security.Transfer 
     with 
       newOwner = seller
 
-  submit dvpOperator $ createCmd DvPService.Service 
+  buyerTradingServiceCid <- submit dvpOperator $ createCmd DvPService.Service 
     with 
       customer = buyer 
       provider = dvpOperator 
 
-  submit dvpOperator $ createCmd DvPService.Service 
+  sellerTradingServiceCid <- submit dvpOperator $ createCmd DvPService.Service 
     with 
       customer = seller 
       provider = dvpOperator 
 
-  return ()
+  pure SetupData with ..
 
 example1 : Script ()
 example1 = script do
 
-  [buyer, seller, bank, custodian, issuingAgent, dvpOperator] <- mapA (\(partyName, userName) -> do 
-    party <- allocatePartyWithHint partyName $ PartyIdHint partyName 
-    uid <- validateUserId userName
-    createUser (User uid (Some party)) [CanActAs party]
-    return party) [
-      ("BuySide", "buy_side"),
-      ("SellSide", "sell_side"),
-      ("Bank", "bank"),
-      ("Custodian", "custodian"), 
-      ("Issuer", "issuer"),
-      ("Operator", "operator")]
+  SetupData {..} <- setup 
 
-  cashHoldingCid <- submit bank $ createCmd Cash.Holding 
-    with 
-      owner = buyer
-      bank = bank 
-      amount = 1_000_000_000.00
-
-  security <- submit custodian $ createCmd Security.Security 
-    with 
-      custodian 
-      issuingAgent 
-      isin = "Foo123"
-
-  securityHoldingCid <- submit issuingAgent $ exerciseCmd security Security.Issue 
-    with 
-      amount = 100.00 
-
-  securityHoldingCid <- submit issuingAgent $ exerciseCmd securityHoldingCid Security.Transfer 
-    with 
-      newOwner = seller
-
-  buyerService <- submit dvpOperator $ createCmd DvPService.Service 
-    with 
-      customer = buyer 
-      provider = dvpOperator 
-
-  sellerService <- submit dvpOperator $ createCmd DvPService.Service 
-    with 
-      customer = seller 
-      provider = dvpOperator 
-
-  sellerOfferCid <- submit seller $ exerciseCmd sellerService DvPService.CreateSellerOffer 
+  sellerOfferCid <- submit seller $ exerciseCmd sellerTradingServiceCid DvPService.CreateSellerOffer 
     with 
       securityAmount = 80.00
       cashAmount = 80_000_000.00
+      securityHoldingCid = sellerSecurityCid
       ..
 
-  fundedDeal <- submit buyer $ exerciseCmd buyerService DvPService.AcceptSellerOffer with ..
+  fundedDeal <- submit buyer $ exerciseCmd buyerTradingServiceCid DvPService.AcceptSellerOffer 
+    with 
+      cashHoldingCid = buyerCashCid
+      ..
 
   submit buyer $ exerciseCmd fundedDeal DvPModel.AtomicallySwap with buyerOrSeller = buyer
 
