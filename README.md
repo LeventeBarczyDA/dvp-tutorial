@@ -31,7 +31,9 @@ This is spelled out in `Trading/Model.daml` and `Trading/Service.daml`, and here
 
 ## What is a Canton Node? 
 
-All participants interact with Canton via a node. Each node may connect to multiple domains, and is subject to the sovereignty of those domains. For the purpose of this tutorial, there are four participant nodes: 
+All participants interact with Canton via a node. Each node may connect to multiple domains, and is subject to the sovereignty of those domains. For the purpose of this tutorial, there are four[^2] participant nodes: 
+
+[^2]: There is also a fifth node, roughly representing the exchange or venue where trading takes place. In the code it's the `operator` Party on the trading contracts. We could have to not include this node at all in the design of the Daml, so that each Trade would be trully bilateral. 
 
 ### Custodian Node 
 
@@ -55,6 +57,8 @@ In summary, these nodes are participating in the following domains:
 | Seller    | :green_book: | :blue_book: | :ledger: |
 | Bank      | :green_book: |             |          |
 | Custodian |              | :blue_book: |          |
+
+To reiterate, one Node is expected to connect to Multiple domains, as shown in the table above.
 
 ## What is a DvP on Canton? 
 
@@ -87,7 +91,6 @@ So after a DvP is completed, each participant will have seen:
 | Buyer's Received securities                             | :blue_book:  | :eyes:       |              | :blue_book: |
 | Buyer's Total Securities                                | :blue_book:  |              |              | :blue_book: |
 | Trade details                                           | :ledger:     | :ledger:|    |              |             |
-
 
 Key: 
 
