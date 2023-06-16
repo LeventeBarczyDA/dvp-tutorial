@@ -1,0 +1,48 @@
+module Trading.Service where 
+
+import Cash qualified
+import Security qualified 
+import Trading.Model
+import DA.Assert ((===))
+
+template Service 
+  with 
+    customer: Party 
+    provider: Party 
+  where 
+    signatory provider 
+    observer customer 
+
+    nonconsuming choice CreateSellerOffer: ContractId SellerOffer
+      with 
+        securityAmount: Decimal 
+        buyer: Party 
+        cashAmount: Decimal 
+        securityHoldingCid: ContractId Security.Holding
+      controller customer 
+      do 
+        sec <- fetch securityHoldingCid 
+        sec.owner === customer 
+        (split, _) <- exercise securityHoldingCid Security.Split with splitAmount = securityAmount
+        sellerEncumberedCid <- exercise split Security.Encumber with beneficiary = buyer
+        create SellerOffer 
+          with 
+            seller = customer 
+            issuer = sec.issuingAgent
+            operator = provider
+            isin = sec.isin
+            .. 
+
+    nonconsuming choice AcceptSellerOffer: ContractId FundedDeal 
+      with 
+        sellerOfferCid: ContractId SellerOffer 
+        cashHoldingCid: ContractId Cash.Holding 
+      controller customer 
+      do 
+        offer <- fetch sellerOfferCid 
+        cash <- fetch cashHoldingCid 
+        cash.owner === offer.buyer 
+
+        (split, _) <- exercise cashHoldingCid Cash.Split with splitAmount = offer.cashAmount 
+        buyerEscrowCid <- exercise split Cash.Escrow with beneficiary = offer.seller 
+        exercise sellerOfferCid BuyerAccept with ..

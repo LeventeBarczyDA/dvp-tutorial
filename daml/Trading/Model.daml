@@ -1,0 +1,50 @@
+module Trading.Model where 
+
+import Cash qualified
+import Security qualified 
+
+template SellerOffer
+  with 
+    seller: Party 
+    securityAmount: Decimal 
+    issuer: Party 
+    isin: Text
+    sellerEncumberedCid: ContractId Security.EncumberedHolding
+  
+    buyer: Party 
+    cashAmount: Decimal 
+    operator: Party 
+  where 
+    signatory seller, operator
+    observer buyer 
+
+    choice BuyerAccept: ContractId FundedDeal
+      with 
+        buyerEscrowCid: ContractId Cash.EscrowHolding
+      controller buyer 
+      do 
+        create FundedDeal with .. 
+
+template FundedDeal 
+  with 
+    seller: Party 
+    securityAmount: Decimal 
+    issuer: Party 
+    sellerEncumberedCid: ContractId Security.EncumberedHolding
+
+    buyer: Party 
+    cashAmount: Decimal 
+    buyerEscrowCid: ContractId Cash.EscrowHolding
+
+    operator: Party 
+  where 
+    signatory seller, buyer, operator
+
+    choice AtomicallySwap: (ContractId Cash.Holding, ContractId Security.Holding) 
+      with 
+        buyerOrSeller: Party 
+      controller buyerOrSeller 
+      do 
+        cashOfSeller <- exercise buyerEscrowCid Cash.TransferToBeneficiary 
+        securityOfBuyer <- exercise sellerEncumberedCid Security.TransferToBeneficiary 
+        return (cashOfSeller, securityOfBuyer)

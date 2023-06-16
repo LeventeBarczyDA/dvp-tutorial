@@ -1,0 +1,77 @@
+module Cash where 
+
+template Holding 
+  with 
+    bank: Party 
+    owner: Party 
+    amount: Decimal 
+  where 
+    signatory bank 
+    observer owner 
+
+    ensure amount >= 0.0
+
+    choice Transfer: ContractId Holding 
+      with 
+        newOwner: Party 
+      controller owner 
+      do 
+        -- implicit Archival 
+        create Holding 
+          with 
+            owner = newOwner 
+            .. -- ... and everything is the same 
+
+    choice Split: (ContractId Holding, ContractId Holding)
+      with 
+        splitAmount: Decimal 
+      controller owner 
+      do 
+        -- implicit Archival 
+        remainder <- create Holding 
+          with 
+            amount = amount - splitAmount 
+            .. 
+        splitHolding <- create Holding 
+          with 
+            amount = splitAmount 
+            .. 
+        return (splitHolding, remainder)
+
+    choice Escrow: ContractId EscrowHolding 
+      with 
+        beneficiary: Party 
+      controller owner 
+      do 
+        create EscrowHolding with ..
+
+template EscrowHolding
+  with 
+    bank: Party 
+    owner: Party 
+    amount: Decimal 
+    beneficiary: Party  
+  where 
+    signatory bank 
+    observer owner, beneficiary 
+
+    choice ClawBack: ContractId Holding 
+      controller owner, beneficiary 
+      do 
+        create Holding with ..
+
+    choice TransferToBeneficiary: ContractId Holding
+      controller owner, beneficiary 
+      do 
+        create Holding 
+          with 
+            owner = beneficiary 
+            ..
+
+    choice DivineIntervention: ContractId Holding 
+      controller bank 
+      do 
+        create Holding
+          with 
+            owner = bank 
+            ..

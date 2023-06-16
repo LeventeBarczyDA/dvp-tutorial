@@ -1,0 +1,81 @@
+module Security where 
+
+template Security 
+  with 
+    custodian: Party 
+    issuingAgent: Party 
+    isin: Text 
+  where 
+    signatory custodian 
+    observer issuingAgent 
+
+    nonconsuming choice Issue: ContractId Holding 
+      with 
+        amount: Decimal 
+      controller issuingAgent 
+      do 
+        create Holding 
+          with 
+            owner = issuingAgent 
+            ..  
+
+template Holding  
+  with
+    owner: Party 
+    custodian: Party 
+    amount: Decimal 
+    isin: Text 
+    issuingAgent: Party 
+  where 
+    signatory custodian, issuingAgent 
+    observer owner 
+
+    ensure amount >= 0.0
+
+    choice Transfer: ContractId Holding 
+      with 
+        newOwner: Party 
+      controller owner 
+      do 
+        create this with owner = newOwner 
+
+    choice Split: (ContractId Holding, ContractId Holding)
+      with 
+        splitAmount: Decimal 
+      controller owner 
+      do 
+        remainder <- create this with amount = amount - splitAmount 
+        split <- create this with amount = splitAmount
+        return (split, remainder)
+
+    choice Encumber: ContractId EncumberedHolding 
+      with 
+        beneficiary: Party 
+      controller owner 
+      do 
+        create EncumberedHolding with ..
+      
+template EncumberedHolding 
+  with
+    owner: Party 
+    custodian: Party 
+    amount: Decimal 
+    isin: Text 
+    issuingAgent: Party 
+    beneficiary: Party 
+  where 
+    signatory custodian, issuingAgent 
+    observer owner, beneficiary
+
+    choice Unencumber: ContractId Holding 
+      controller owner, beneficiary
+      do 
+        create Holding with ..
+
+    choice TransferToBeneficiary: ContractId Holding 
+      controller owner, beneficiary
+      do 
+        create Holding 
+          with 
+            owner = beneficiary 
+            ..

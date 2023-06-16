@@ -1,0 +1,111 @@
+module Main where
+
+import Daml.Script
+import Cash qualified
+import Security qualified
+import Trading.Service qualified as DvPService 
+import Trading.Model qualified as DvPModel
+
+setup : Script ()
+setup = script do
+
+  [buyer, seller, bank, custodian, issuingAgent, dvpOperator] <- mapA (\(partyName, userName) -> do 
+    party <- allocatePartyWithHint partyName $ PartyIdHint partyName 
+    uid <- validateUserId userName
+    createUser (User uid (Some party)) [CanActAs party]
+    return party) [
+      ("BuySide", "buy_side"),
+      ("SellSide", "sell_side"),
+      ("Bank", "bank"),
+      ("Custodian", "custodian"), 
+      ("Issuer", "issuer"),
+      ("Operator", "operator")]
+
+  buyerCash <- submit bank $ createCmd Cash.Holding 
+    with 
+      owner = buyer
+      bank = bank 
+      amount = 1_000_000_000.00
+
+  security <- submit custodian $ createCmd Security.Security 
+    with 
+      custodian 
+      issuingAgent 
+      isin = "Foo123"
+
+  holding <- submit issuingAgent $ exerciseCmd security Security.Issue 
+    with 
+      amount = 100.00 
+
+  holding <- submit issuingAgent $ exerciseCmd holding Security.Transfer 
+    with 
+      newOwner = seller
+
+  submit dvpOperator $ createCmd DvPService.Service 
+    with 
+      customer = buyer 
+      provider = dvpOperator 
+
+  submit dvpOperator $ createCmd DvPService.Service 
+    with 
+      customer = seller 
+      provider = dvpOperator 
+
+  return ()
+
+example1 : Script ()
+example1 = script do
+
+  [buyer, seller, bank, custodian, issuingAgent, dvpOperator] <- mapA (\(partyName, userName) -> do 
+    party <- allocatePartyWithHint partyName $ PartyIdHint partyName 
+    uid <- validateUserId userName
+    createUser (User uid (Some party)) [CanActAs party]
+    return party) [
+      ("BuySide", "buy_side"),
+      ("SellSide", "sell_side"),
+      ("Bank", "bank"),
+      ("Custodian", "custodian"), 
+      ("Issuer", "issuer"),
+      ("Operator", "operator")]
+
+  cashHoldingCid <- submit bank $ createCmd Cash.Holding 
+    with 
+      owner = buyer
+      bank = bank 
+      amount = 1_000_000_000.00
+
+  security <- submit custodian $ createCmd Security.Security 
+    with 
+      custodian 
+      issuingAgent 
+      isin = "Foo123"
+
+  securityHoldingCid <- submit issuingAgent $ exerciseCmd security Security.Issue 
+    with 
+      amount = 100.00 
+
+  securityHoldingCid <- submit issuingAgent $ exerciseCmd securityHoldingCid Security.Transfer 
+    with 
+      newOwner = seller
+
+  buyerService <- submit dvpOperator $ createCmd DvPService.Service 
+    with 
+      customer = buyer 
+      provider = dvpOperator 
+
+  sellerService <- submit dvpOperator $ createCmd DvPService.Service 
+    with 
+      customer = seller 
+      provider = dvpOperator 
+
+  sellerOfferCid <- submit seller $ exerciseCmd sellerService DvPService.CreateSellerOffer 
+    with 
+      securityAmount = 80.00
+      cashAmount = 80_000_000.00
+      ..
+
+  fundedDeal <- submit buyer $ exerciseCmd buyerService DvPService.AcceptSellerOffer with ..
+
+  submit buyer $ exerciseCmd fundedDeal DvPModel.AtomicallySwap with buyerOrSeller = buyer
+
+  return ()
