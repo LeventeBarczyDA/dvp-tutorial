@@ -45,6 +45,17 @@ This node only connects to the Cash domain, and is responsible for the liability
 
 These two nodes connect to all three Domains and are entitled very similarly, except on initial setup the buyer has cash and the seller has securities. 
 
+### Topology
+
+In summary, these nodes are participating in the following domains:
+
+| Node      | Cash         | Security    | Trading  | 
+|-----------|--------------|-------------|----------|
+| Buyer     | :green_book: | :blue_book: | :ledger: |
+| Seller    | :green_book: | :blue_book: | :ledger: |
+| Bank      | :green_book: |             |          |
+| Custodian |              | :blue_book: |          |
+
 ## What is a DvP on Canton? 
 
 For the purpose of this tutorial, a DvP occurs if and only the following occur atomically: 
