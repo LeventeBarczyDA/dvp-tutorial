@@ -90,7 +90,7 @@ So after a DvP is completed, each participant will have seen:
 | Seller's Encumbered Securities (Buyer's Benefit)        | :blue_book:  | :blue_book:  |              | :blue_book: |
 | Buyer's Received securities                             | :blue_book:  | :eyes:       |              | :blue_book: |
 | Buyer's Total Securities                                | :blue_book:  |              |              | :blue_book: |
-| Trade details                                           | :ledger:     | :ledger:|    |              |             |
+| Trade details                                           | :ledger:     | :ledger:     |              |             |
 
 Key: 
 
