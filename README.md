@@ -65,11 +65,17 @@ Privacy means that participants can only see business contracts that is relevant
 
 So after a DvP is completed, each participant will have seen:
 
-| Item                                                    | Buyer        | Seller       | Bank         | Custodian |
-|---------------------------------------------------------|--------------|--------------|--------------|-----------|
-| Buyer's Total Cash                                      | :green_book: |              | :green_book: |           |
-| Buyer's Escrowed Cash (Seller's Benefit)                | :green_book: | :green_book: | :green_book: |           |
-| Seller's Cash from Escrow (Not escrowed)                | :eyes:       | :green_book: | :green_book: |           |
+| Item                                                    | Buyer        | Seller       | Bank         | Custodian   |
+|---------------------------------------------------------|--------------|--------------|--------------|-------------|
+| Buyer's Total Cash                                      | :green_book: |              | :green_book: |             |
+| Buyer's Escrowed Cash (Seller's Benefit)                | :green_book: | :green_book: | :green_book: |             |
+| Seller's Received Cash                                  | :eyes:       | :green_book: | :green_book: |             |
+| Seller's Total Cash                                     |              | :green_book: | :green_book: |             |
+| Seller's Total Securities                               |              | :blue_book:  |              | :blue_book: |
+| Seller's Encumbered Securities (Buyer's Benefit)        | :blue_book:  | :blue_book:  |              | :blue_book: |
+| Buyer's Received securities                             | :blue_book:  | :eyes:       |              | :blue_book: |
+| Buyer's Total Securities                                | :blue_book:  |              |              | :blue_book: |
+| Trade details                                           | :ledger:     | :ledger:|    |              |             |
 
 
 Key: 
@@ -77,4 +83,4 @@ Key:
 - :green_book: : Is on the ledger at that node, in the Cash Domain 
 - :blue_book:  : Is on the ledger at that node, in the Securities Domain 
 - :ledger:     : Is on the ledger at that node, in the Trading Domain
-- :eyes:       : The node holder is aware of the existence of the contract but does not have it on their ledger. 
+- :eyes:       : The participant is aware of the existence of the contract but does not have it on their ledger and will know nothing about it in the future. 
