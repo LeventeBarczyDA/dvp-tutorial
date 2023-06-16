@@ -19,15 +19,15 @@ There are three domains in this applications in this tutorial, but see this [^1]
 
 ### Cash domain 
 
-This domain, spelled out in `Cash.daml`, allows a few features associated with a liquid cash instrument. Firstly, cash holdings can be split up, transferred, recombined, etc.. Notably, a cash holding may be partially escrowed for the benefit of a third party. 
+This domain, spelled out in `Cash.daml` and here denoted :green_book:,  allows a few features associated with a liquid cash instrument. Firstly, cash holdings can be split up, transferred, recombined, etc.. Notably, a cash holding may be partially escrowed for the benefit of a third party. 
 
 ### Security domain 
 
-This domain is spelled out in `Security.daml`, and allows for the issuance, transfer, and splitting of a security holding. Also, it spells out the concept of encumberance and unencumberance. 
+This domain is spelled out in `Security.daml` and here denoted :blue_book:, and allows for the issuance, transfer, and splitting of a security holding. Also, it spells out the concept of encumberance and unencumberance. 
 
 ### Trading domain 
 
-This is spelled out in `Trading/Model.daml` and `Trading/Service.daml`. The idea is that security holders can offer trades to cash holders at a certain price. Accepted deals then cause a DvP between the buyer and the seller. This domain first locks the asset when it is offered as part of a trade, and locks the cash when the buyer accepts that offer. A single DvP transaction then swaps the asset. 
+This is spelled out in `Trading/Model.daml` and `Trading/Service.daml`, and here denoted :ledger:. The idea is that security holders can offer trades to cash holders at a certain price. Accepted deals then cause a DvP between the buyer and the seller. This domain first locks the asset when it is offered as part of a trade, and locks the cash when the buyer accepts that offer. A single DvP transaction then swaps the asset. 
 
 ## What is a Canton Node? 
 
